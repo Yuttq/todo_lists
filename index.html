@@ -2,28 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My To-Do List</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>My To-Do List</h1>
+    <div class="app-container">
+        <header>
+            <h1>My To-Do List</h1>
+            <button id="toggle-dark-mode" aria-label="Toggle dark mode">🌓</button>
+        </header>
 
-    <button id="toggle-dark-mode">Toggle Dark Mode</button>
+        <main>
+            <div class="todo-container">
+                <div class="input-group">
+                    <input type="text" id="task-input" placeholder="Add a new task..." aria-label="Task description">
+                    <input type="date" id="due-date" aria-label="Due date">
+                    <button id="add-task-btn" class="primary-btn">Add Task</button>
+                </div>
 
-    <div class="todo-container">
-        <input type="text" id="task-input" placeholder="Add a new task...">
-        <input type="date" id="due-date">
-        <button id="add-task-btn">Add</button>
+                <div class="controls">
+                    <div class="filter-buttons" role="group" aria-label="Task filters">
+                        <button data-filter="all" class="filter-btn active">All</button>
+                        <button data-filter="pending" class="filter-btn">Pending</button>
+                        <button data-filter="completed" class="filter-btn">Completed</button>
+                    </div>
 
-        <div class="filter-buttons">
-            <button data-filter="all">All</button>
-            <button data-filter="completed">Completed</button>
-            <button data-filter="pending">Pending</button>
-        </div>
+                    <button id="clear-tasks-btn" class="danger-btn">Clear All</button>
+                </div>
 
-        <button id="clear-tasks-btn" class="clear-btn">Clear All Tasks</button>
-
-        <ul id="task-list"></ul>
+                <ul id="task-list" aria-live="polite"></ul>
+                <div id="task-count" class="task-counter">0 tasks</div>
+            </div>
+        </main>
     </div>
 
     <script src="script.js"></script>

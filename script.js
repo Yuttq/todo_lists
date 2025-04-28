@@ -1,187 +1,237 @@
-const addTaskBtn = document.getElementById('add-task-btn');
-const taskInput = document.getElementById('task-input');
-const dueDateInput = document.getElementById('due-date');
-const taskList = document.getElementById('task-list');
-const filterButtons = document.querySelectorAll('.filter-buttons button');
-const clearTasksBtn = document.getElementById('clear-tasks-btn');
+class TodoApp {
+    constructor() {
+        this.elements = {
+            addTaskBtn: document.getElementById('add-task-btn'),
+            taskInput: document.getElementById('task-input'),
+            dueDateInput: document.getElementById('due-date'),
+            taskList: document.getElementById('task-list'),
+            filterButtons: document.querySelectorAll('.filter-buttons button'),
+            clearTasksBtn: document.getElementById('clear-tasks-btn'),
+            toggleDarkModeBtn: document.getElementById('toggle-dark-mode'),
+            taskCount: document.getElementById('task-count')
+        };
 
-// Load tasks when page loads
-window.addEventListener('DOMContentLoaded', () => {
-    loadTasks();
-    loadDarkMode();
-});
-
-// Add Task
-function addTask() {
-    const taskText = taskInput.value.trim();
-    const dueDate = dueDateInput.value;
-
-    if (taskText !== "") {
-        const li = createTaskElement(taskText, dueDate, false);
-        taskList.appendChild(li);
-        saveTask(taskText, dueDate, false);
-        taskInput.value = "";
-        dueDateInput.value = "";
-    }
-}
-
-// Create Task Element
-function createTaskElement(taskText, dueDate, completed) {
-    const li = document.createElement('li');
-
-    const span = document.createElement('span');
-    span.textContent = `${taskText} ${dueDate ? `- Due: ${dueDate}` : ""}`;
-
-    if (completed) {
-        li.classList.add('completed');
+        this.currentFilter = 'all';
+        this.init();
     }
 
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Delete';
-
-    const editBtn = document.createElement('button');
-    editBtn.textContent = 'Edit';
-
-    deleteBtn.addEventListener('click', function () {
-        li.classList.add('fade-out');
-        setTimeout(() => {
-            taskList.removeChild(li);
-            deleteTask(taskText);
-        }, 400);
-    });
-
-    editBtn.addEventListener('click', function () {
-        const newTaskText = prompt('Edit your task:', taskText);
-        if (newTaskText !== null && newTaskText.trim() !== "") {
-            updateTask(taskText, newTaskText);
-            span.textContent = `${newTaskText} ${dueDate ? `- Due: ${dueDate}` : ""}`;
-            taskText = newTaskText; // Update local variable
-        }
-    });
-
-    span.addEventListener('click', function () {
-        li.classList.toggle('completed');
-        toggleTaskCompletion(taskText);
-    });
-
-    li.appendChild(span);
-    li.appendChild(editBtn);
-    li.appendChild(deleteBtn);
-
-    return li;
-}
-
-// Save Task to localStorage
-function saveTask(taskText, dueDate, completed) {
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    tasks.push({ text: taskText, dueDate: dueDate, completed: completed });
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-}
-
-// Delete Task from localStorage
-function deleteTask(taskText) {
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    tasks = tasks.filter(task => task.text !== taskText);
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-}
-
-// Update Task in localStorage
-function updateTask(oldText, newText) {
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    tasks = tasks.map(task => {
-        if (task.text === oldText) {
-            task.text = newText;
-        }
-        return task;
-    });
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-}
-
-// Toggle Completed State
-function toggleTaskCompletion(taskText) {
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    tasks = tasks.map(task => {
-        if (task.text === taskText) {
-            task.completed = !task.completed;
-        }
-        return task;
-    });
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-}
-
-// Load Tasks and Sort by Due Date
-function loadTasks() {
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    tasks.sort((a, b) => {
-        if (a.dueDate && b.dueDate) {
-            return new Date(a.dueDate) - new Date(b.dueDate);
-        }
-        return 0; // If there's no due date, don't change the order
-    });
-    tasks.forEach(task => {
-        const li = createTaskElement(task.text, task.dueDate, task.completed);
-        taskList.appendChild(li);
-    });
-}
-
-// Filter Tasks
-filterButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        const filter = button.getAttribute('data-filter');
-        filterTasks(filter);
-    });
-});
-
-function filterTasks(filter) {
-    const tasks = taskList.querySelectorAll('li');
-    tasks.forEach(task => {
-        const isCompleted = task.classList.contains('completed');
-        if (filter === 'all') {
-            task.style.display = '';
-        } else if (filter === 'completed' && !isCompleted) {
-            task.style.display = 'none';
-        } else if (filter === 'pending' && isCompleted) {
-            task.style.display = 'none';
-        } else {
-            task.style.display = '';
-        }
-    });
-}
-
-// Clear All Tasks
-clearTasksBtn.addEventListener('click', () => {
-    if (confirm('Are you sure you want to delete all tasks?')) {
-        localStorage.removeItem('tasks');
-        taskList.innerHTML = '';
+    init() {
+        this.setupEventListeners();
+        this.loadTasks();
+        this.loadDarkMode();
+        this.updateTaskCount();
     }
-});
 
-// Dark Mode
-const darkModeBtn = document.getElementById('toggle-dark-mode');
-
-darkModeBtn.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-    document.querySelector('.todo-container').classList.toggle('dark-mode');
-
-    const listItems = document.querySelectorAll('li');
-    listItems.forEach(item => {
-        item.classList.toggle('dark-mode');
-    });
-
-    localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
-});
-
-function loadDarkMode() {
-    const darkMode = JSON.parse(localStorage.getItem('darkMode'));
-    if (darkMode) {
-        document.body.classList.add('dark-mode');
-        document.querySelector('.todo-container').classList.add('dark-mode');
-        const listItems = document.querySelectorAll('li');
-        listItems.forEach(item => {
-            item.classList.add('dark-mode');
+    setupEventListeners() {
+        this.elements.addTaskBtn.addEventListener('click', () => this.addTask());
+        this.elements.taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.addTask();
+        });
+        
+        this.elements.clearTasksBtn.addEventListener('click', () => this.clearAllTasks());
+        this.elements.toggleDarkModeBtn.addEventListener('click', () => this.toggleDarkMode());
+        
+        this.elements.filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                this.currentFilter = button.dataset.filter;
+                this.updateFilterButtons();
+                this.filterTasks(this.currentFilter);
+            });
         });
     }
+
+    addTask() {
+        const taskText = this.elements.taskInput.value.trim();
+        const dueDate = this.elements.dueDateInput.value;
+
+        if (taskText !== "") {
+            const task = {
+                id: Date.now().toString(),
+                text: taskText,
+                dueDate: dueDate,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+
+            this.createTaskElement(task);
+            this.saveTask(task);
+            this.elements.taskInput.value = "";
+            this.elements.dueDateInput.value = "";
+            this.updateTaskCount();
+            this.elements.taskInput.focus();
+        }
+    }
+
+    createTaskElement(task) {
+        const li = document.createElement('li');
+        li.dataset.id = task.id;
+        if (task.completed) li.classList.add('completed');
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = task.completed;
+        checkbox.addEventListener('change', () => this.toggleTaskCompletion(task.id));
+
+        const span = document.createElement('span');
+        span.textContent = task.text;
+
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'task-date';
+        if (task.dueDate) {
+            dateSpan.textContent = this.formatDate(task.dueDate);
+        }
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'task-actions';
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.addEventListener('click', () => this.editTask(task.id));
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.addEventListener('click', () => this.deleteTask(task.id));
+
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(deleteBtn);
+
+        li.appendChild(checkbox);
+        li.appendChild(span);
+        li.appendChild(dateSpan);
+        li.appendChild(actionsDiv);
+
+        this.elements.taskList.appendChild(li);
+    }
+
+    editTask(taskId) {
+        const tasks = this.getTasks();
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) return;
+
+        const newText = prompt('Edit your task:', task.text);
+        if (newText !== null && newText.trim() !== "") {
+            task.text = newText.trim();
+            this.saveTasks(tasks);
+            this.loadTasks();
+        }
+    }
+
+    deleteTask(taskId) {
+        const li = document.querySelector(`li[data-id="${taskId}"]`);
+        if (!li) return;
+
+        li.classList.add('fade-out');
+        setTimeout(() => {
+            const tasks = this.getTasks().filter(task => task.id !== taskId);
+            this.saveTasks(tasks);
+            this.updateTaskCount();
+            li.remove();
+        }, 400);
+    }
+
+    toggleTaskCompletion(taskId) {
+        const tasks = this.getTasks();
+        const task = tasks.find(t => t.id === taskId);
+        if (task) {
+            task.completed = !task.completed;
+            this.saveTasks(tasks);
+            this.filterTasks(this.currentFilter);
+            this.updateTaskCount();
+        }
+    }
+
+    saveTask(task) {
+        const tasks = this.getTasks();
+        tasks.push(task);
+        this.saveTasks(tasks);
+    }
+
+    saveTasks(tasks) {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    getTasks() {
+        return JSON.parse(localStorage.getItem('tasks')) || [];
+    }
+
+    loadTasks() {
+        this.elements.taskList.innerHTML = '';
+        const tasks = this.getTasks().sort((a, b) => {
+            // Sort by completion status (pending first)
+            if (a.completed !== b.completed) return a.completed ? 1 : -1;
+            
+            // Then sort by due date (earlier first)
+            if (a.dueDate && b.dueDate) return new Date(a.dueDate) - new Date(b.dueDate);
+            if (a.dueDate) return -1;
+            if (b.dueDate) return 1;
+            
+            // Finally sort by creation date (newer first)
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        tasks.forEach(task => this.createTaskElement(task));
+        this.filterTasks(this.currentFilter);
+    }
+
+    filterTasks(filter) {
+        const tasks = this.elements.taskList.querySelectorAll('li');
+        tasks.forEach(task => {
+            const isCompleted = task.classList.contains('completed');
+            
+            switch(filter) {
+                case 'all':
+                    task.style.display = '';
+                    break;
+                case 'completed':
+                    task.style.display = isCompleted ? '' : 'none';
+                    break;
+                case 'pending':
+                    task.style.display = !isCompleted ? '' : 'none';
+                    break;
+            }
+        });
+    }
+
+    updateFilterButtons() {
+        this.elements.filterButtons.forEach(button => {
+            button.classList.toggle('active', button.dataset.filter === this.currentFilter);
+        });
+    }
+
+    clearAllTasks() {
+        if (confirm('Are you sure you want to delete all tasks?')) {
+            localStorage.removeItem('tasks');
+            this.elements.taskList.innerHTML = '';
+            this.updateTaskCount();
+        }
+    }
+
+    toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    }
+
+    loadDarkMode() {
+        const darkMode = JSON.parse(localStorage.getItem('darkMode'));
+        if (darkMode) {
+            document.body.classList.add('dark-mode');
+        }
+    }
+
+    updateTaskCount() {
+        const tasks = this.getTasks();
+        const total = tasks.length;
+        const completed = tasks.filter(t => t.completed).length;
+        this.elements.taskCount.textContent = `${completed} of ${total} tasks completed`;
+    }
+
+    formatDate(dateString) {
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return new Date(dateString).toLocaleDateString(undefined, options);
+    }
 }
 
-// Add task event
-addTaskBtn.addEventListener('click', addTask);
+// Initialize the app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    new TodoApp();
+});

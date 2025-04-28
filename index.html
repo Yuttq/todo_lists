@@ -6,12 +6,23 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <button id="darkModeToggle">Toggle Dark Mode</button>
-
     <h1>My To-Do List</h1>
+
+    <button id="toggle-dark-mode">Toggle Dark Mode</button>
+
     <div class="todo-container">
         <input type="text" id="task-input" placeholder="Add a new task...">
+        <input type="date" id="due-date">
         <button id="add-task-btn">Add</button>
+
+        <div class="filter-buttons">
+            <button data-filter="all">All</button>
+            <button data-filter="completed">Completed</button>
+            <button data-filter="pending">Pending</button>
+        </div>
+
+        <button id="clear-tasks-btn" class="clear-btn">Clear All Tasks</button>
+
         <ul id="task-list"></ul>
     </div>
 

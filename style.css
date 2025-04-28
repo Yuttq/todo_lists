@@ -3,7 +3,6 @@ body {
     text-align: center;
     background: #f4f4f4;
     margin-top: 50px;
-    transition: background 0.3s, color 0.3s;
 }
 
 .todo-container {
@@ -14,7 +13,8 @@ body {
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-input[type="text"] {
+input[type="text"],
+input[type="date"] {
     width: 70%;
     padding: 10px;
     margin-bottom: 10px;
@@ -22,6 +22,19 @@ input[type="text"] {
 
 button {
     padding: 10px;
+    margin: 5px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+.clear-btn {
+    background-color: #dc3545;
 }
 
 ul {
@@ -36,35 +49,29 @@ li {
     text-align: left;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     animation: fadeIn 0.3s ease;
 }
 
-.completed {
+li span {
+    flex: 1;
+    cursor: pointer;
+}
+
+.completed span {
     text-decoration: line-through;
     color: gray;
 }
 
 /* Animations */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeOut {
-    from {
-        opacity: 1;
-        transform: translateX(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateX(100px);
-    }
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(100px); }
 }
 
 .fade-out {
@@ -72,28 +79,16 @@ li {
 }
 
 /* Dark Mode */
-.dark-mode {
-    background: #121212;
-    color: #ffffff;
+body.dark-mode {
+    background-color: #121212;
+    color: #f4f4f4;
 }
 
-.dark-mode .todo-container {
-    background: #1e1e1e;
-    box-shadow: 0 0 10px rgba(255,255,255,0.1);
+.todo-container.dark-mode {
+    background-color: #1e1e1e;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
 
-.dark-mode li {
+li.dark-mode {
     background: #333;
-}
-
-.dark-mode input[type="text"] {
-    background: #333;
-    color: #fff;
-    border: 1px solid #555;
-}
-
-.dark-mode button {
-    background: #555;
-    color: #fff;
-    border: none;
 }

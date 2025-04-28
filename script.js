@@ -1,69 +1,103 @@
 const addTaskBtn = document.getElementById('add-task-btn');
 const taskInput = document.getElementById('task-input');
+const dueDateInput = document.getElementById('due-date');
 const taskList = document.getElementById('task-list');
-const darkModeToggle = document.getElementById('darkModeToggle');
+const filterButtons = document.querySelectorAll('.filter-buttons button');
+const clearTasksBtn = document.getElementById('clear-tasks-btn');
 
-// Load tasks from localStorage when the page loads
+// Load tasks when page loads
 window.addEventListener('DOMContentLoaded', () => {
     loadTasks();
     loadDarkMode();
 });
 
-// Function to add a new task
+// Add Task
 function addTask() {
     const taskText = taskInput.value.trim();
+    const dueDate = dueDateInput.value;
+
     if (taskText !== "") {
-        const li = createTaskElement(taskText, false);
+        const li = createTaskElement(taskText, dueDate, false);
         taskList.appendChild(li);
-        saveTask(taskText, false);
+        saveTask(taskText, dueDate, false);
         taskInput.value = "";
+        dueDateInput.value = "";
     }
 }
 
-// Function to create a task element
-function createTaskElement(taskText, completed) {
+// Create Task Element
+function createTaskElement(taskText, dueDate, completed) {
     const li = document.createElement('li');
-    li.textContent = taskText;
+
+    const span = document.createElement('span');
+    span.textContent = `${taskText} ${dueDate ? `- Due: ${dueDate}` : ""}`;
 
     if (completed) {
         li.classList.add('completed');
     }
 
-    li.addEventListener('click', () => {
-        li.classList.toggle('completed');
-        toggleTaskCompletion(taskText);
-    });
-
     const deleteBtn = document.createElement('button');
     deleteBtn.textContent = 'Delete';
-    deleteBtn.addEventListener('click', function(e) {
-        e.stopPropagation(); // Stop triggering complete toggle
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = 'Edit';
+
+    deleteBtn.addEventListener('click', function () {
         li.classList.add('fade-out');
         setTimeout(() => {
             taskList.removeChild(li);
             deleteTask(taskText);
-        }, 400); // Match the fadeOut animation time
+        }, 400);
     });
 
+    editBtn.addEventListener('click', function () {
+        const newTaskText = prompt('Edit your task:', taskText);
+        if (newTaskText !== null && newTaskText.trim() !== "") {
+            updateTask(taskText, newTaskText);
+            span.textContent = `${newTaskText} ${dueDate ? `- Due: ${dueDate}` : ""}`;
+            taskText = newTaskText; // Update local variable
+        }
+    });
+
+    span.addEventListener('click', function () {
+        li.classList.toggle('completed');
+        toggleTaskCompletion(taskText);
+    });
+
+    li.appendChild(span);
+    li.appendChild(editBtn);
     li.appendChild(deleteBtn);
+
     return li;
 }
 
-// Save task to localStorage
-function saveTask(taskText, completed) {
+// Save Task to localStorage
+function saveTask(taskText, dueDate, completed) {
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    tasks.push({ text: taskText, completed: completed });
+    tasks.push({ text: taskText, dueDate: dueDate, completed: completed });
     localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
-// Delete task from localStorage
+// Delete Task from localStorage
 function deleteTask(taskText) {
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
     tasks = tasks.filter(task => task.text !== taskText);
     localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
-// Toggle completed state in localStorage
+// Update Task in localStorage
+function updateTask(oldText, newText) {
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    tasks = tasks.map(task => {
+        if (task.text === oldText) {
+            task.text = newText;
+        }
+        return task;
+    });
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+// Toggle Completed State
 function toggleTaskCompletion(taskText) {
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
     tasks = tasks.map(task => {
@@ -75,41 +109,79 @@ function toggleTaskCompletion(taskText) {
     localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
-// Load tasks from localStorage
+// Load Tasks and Sort by Due Date
 function loadTasks() {
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    tasks.sort((a, b) => {
+        if (a.dueDate && b.dueDate) {
+            return new Date(a.dueDate) - new Date(b.dueDate);
+        }
+        return 0; // If there's no due date, don't change the order
+    });
     tasks.forEach(task => {
-        const li = createTaskElement(task.text, task.completed);
+        const li = createTaskElement(task.text, task.dueDate, task.completed);
         taskList.appendChild(li);
     });
 }
 
-// Dark Mode Toggle
-darkModeToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
+// Filter Tasks
+filterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const filter = button.getAttribute('data-filter');
+        filterTasks(filter);
+    });
+});
 
-    // Save preference
-    if (document.body.classList.contains('dark-mode')) {
-        localStorage.setItem('darkMode', 'enabled');
-    } else {
-        localStorage.setItem('darkMode', 'disabled');
+function filterTasks(filter) {
+    const tasks = taskList.querySelectorAll('li');
+    tasks.forEach(task => {
+        const isCompleted = task.classList.contains('completed');
+        if (filter === 'all') {
+            task.style.display = '';
+        } else if (filter === 'completed' && !isCompleted) {
+            task.style.display = 'none';
+        } else if (filter === 'pending' && isCompleted) {
+            task.style.display = 'none';
+        } else {
+            task.style.display = '';
+        }
+    });
+}
+
+// Clear All Tasks
+clearTasksBtn.addEventListener('click', () => {
+    if (confirm('Are you sure you want to delete all tasks?')) {
+        localStorage.removeItem('tasks');
+        taskList.innerHTML = '';
     }
 });
 
-// Load Dark Mode preference
+// Dark Mode
+const darkModeBtn = document.getElementById('toggle-dark-mode');
+
+darkModeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    document.querySelector('.todo-container').classList.toggle('dark-mode');
+
+    const listItems = document.querySelectorAll('li');
+    listItems.forEach(item => {
+        item.classList.toggle('dark-mode');
+    });
+
+    localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+});
+
 function loadDarkMode() {
-    const darkMode = localStorage.getItem('darkMode');
-    if (darkMode === 'enabled') {
+    const darkMode = JSON.parse(localStorage.getItem('darkMode'));
+    if (darkMode) {
         document.body.classList.add('dark-mode');
+        document.querySelector('.todo-container').classList.add('dark-mode');
+        const listItems = document.querySelectorAll('li');
+        listItems.forEach(item => {
+            item.classList.add('dark-mode');
+        });
     }
 }
 
-// Event listener for Add button
+// Add task event
 addTaskBtn.addEventListener('click', addTask);
-
-// Optional: Press Enter key to add task
-taskInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        addTask();
-    }
-});
